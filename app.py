@@ -501,7 +501,7 @@ def main():
     st.markdown("""
     <div class="footer">
         🇧🇩 Bangladesh E-Passport Virtual Consular Officer • Multi-Agent System powered by CrewAI<br>
-        Built with ❤️ by Amar • Data based on 2026 Official Fee Structure
+        Built with ❤️ by Rashedul Albab • Data based on 2026 Official Fee Structure
     </div>
     """, unsafe_allow_html=True)
 
