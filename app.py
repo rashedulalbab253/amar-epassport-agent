@@ -6,6 +6,10 @@ Streamlit Web UI — Beautiful, production-grade interface.
 import streamlit as st
 import logging
 import time
+import os
+
+# Disable CrewAI Telemetry before any CrewAI imports to avoid Streamlit thread ValueError
+os.environ["CREWAI_TELEMETRY_OPT_OUT"] = "true"
 
 from src.utils.logger import setup_logger
 from src.utils.validators import parse_user_input

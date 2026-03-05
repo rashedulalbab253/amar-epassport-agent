@@ -4,6 +4,7 @@ crewai>=0.102.0
 # LLM Providers
 langchain-openai==0.3.7
 langchain-google-genai==2.1.4
+google-genai>=0.2.2
 
 # Data Validation
 pydantic==2.10.6
