@@ -1,6 +1,5 @@
 # Core Framework
 crewai>=0.102.0
-crewai-tools>=0.17.0
 
 # LLM Providers
 langchain-openai==0.3.7
