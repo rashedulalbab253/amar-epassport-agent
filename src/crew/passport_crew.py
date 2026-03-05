@@ -117,74 +117,105 @@ class PassportCrew:
         logger.info("=" * 60)
         logger.info(f"Applicant: age={profile.age}, profession={profile.profession.value}")
 
-        try:
-            # ── Step 1: Create Agents ───────────────────────────────
-            logger.info("Creating agents...")
+        providers_to_try = [self.llm_provider]
+        if self.llm_provider == "google":
+            providers_to_try.append("openai")
+        elif self.llm_provider == "openai":
+            providers_to_try.append("google")
 
-            policy_guardian = create_policy_guardian(
-                llm=self.llm,
-                verbose=self.verbose,
-            )
-            fee_calculator = create_fee_calculator(
-                llm=self.llm,
-                verbose=self.verbose,
-            )
-            document_architect = create_document_architect(
-                llm=self.llm,
-                verbose=self.verbose,
-            )
+        last_error = ""
 
-            logger.info("✅ All 3 agents created successfully")
+        for provider in providers_to_try:
+            try:
+                if provider != self.llm_provider:
+                    logger.info(f"🔄 Attempting fallback to {provider} provider...")
+                    self.llm_provider = provider
+                    self.model_name = self._get_default_model()
+                    self.llm = self._create_llm()
 
-            # ── Step 2: Create Tasks (with delegation chain) ────────
-            logger.info("Creating tasks with delegation chain...")
+                # ── Step 1: Create Agents ───────────────────────────────
+                logger.info(f"Creating agents (Provider: {self.llm_provider})...")
 
-            # Task 1: Eligibility (Policy Guardian)
-            eligibility_task = create_eligibility_task(
-                agent=policy_guardian,
-                profile=profile,
-            )
+                policy_guardian = create_policy_guardian(
+                    llm=self.llm,
+                    verbose=self.verbose,
+                )
+                fee_calculator = create_fee_calculator(
+                    llm=self.llm,
+                    verbose=self.verbose,
+                )
+                document_architect = create_document_architect(
+                    llm=self.llm,
+                    verbose=self.verbose,
+                )
 
-            # Task 2: Fee Calculation (receives Task 1 as context)
-            fee_task = create_fee_task(
-                agent=fee_calculator,
-                profile=profile,
-                eligibility_task=eligibility_task,
-            )
+                logger.info("✅ All 3 agents created successfully")
 
-            # Task 3: Document Checklist + Final Report (receives Tasks 1 & 2)
-            checklist_task = create_checklist_task(
-                agent=document_architect,
-                profile=profile,
-                eligibility_task=eligibility_task,
-                fee_task=fee_task,
-            )
+                # ── Step 2: Create Tasks (with delegation chain) ────────
+                logger.info("Creating tasks with delegation chain...")
 
-            logger.info("✅ All 3 tasks created with delegation chain")
+                # Task 1: Eligibility (Policy Guardian)
+                eligibility_task = create_eligibility_task(
+                    agent=policy_guardian,
+                    profile=profile,
+                )
 
-            # ── Step 3: Assemble and Run the Crew ───────────────────
-            logger.info("Assembling the crew...")
+                # Task 2: Fee Calculation (receives Task 1 as context)
+                fee_task = create_fee_task(
+                    agent=fee_calculator,
+                    profile=profile,
+                    eligibility_task=eligibility_task,
+                )
 
-            crew = Crew(
-                agents=[policy_guardian, fee_calculator, document_architect],
-                tasks=[eligibility_task, fee_task, checklist_task],
-                process=Process.sequential,
-                verbose=self.verbose,
-            )
+                # Task 3: Document Checklist + Final Report (receives Tasks 1 & 2)
+                checklist_task = create_checklist_task(
+                    agent=document_architect,
+                    profile=profile,
+                    eligibility_task=eligibility_task,
+                    fee_task=fee_task,
+                )
 
-            logger.info("⚡ Kicking off the crew...")
-            result = crew.kickoff()
+                logger.info("✅ All 3 tasks created with delegation chain")
 
-            logger.info("=" * 60)
-            logger.info("✅ Passport Assessment Pipeline COMPLETE")
-            logger.info("=" * 60)
+                # ── Step 3: Assemble and Run the Crew ───────────────────
+                logger.info("Assembling the crew...")
 
-            return str(result)
+                crew = Crew(
+                    agents=[policy_guardian, fee_calculator, document_architect],
+                    tasks=[eligibility_task, fee_task, checklist_task],
+                    process=Process.sequential,
+                    verbose=self.verbose,
+                )
 
-        except Exception as e:
-            logger.error(f"❌ Pipeline failed: {e}")
-            # Generate fallback report using local database
-            return self._generate_fallback_report(profile, str(e))
+                logger.info(f"⚡ Kicking off the crew with {self.llm_provider}...")
+                result = crew.kickoff()
+
+                logger.info("=" * 60)
+                logger.info("✅ Passport Assessment Pipeline COMPLETE")
+                logger.info("=" * 60)
+
+                return str(result)
+
+            except Exception as e:
+                last_error = str(e)
+                logger.error(f"❌ Pipeline failed with provider {provider}: {last_error}")
+                
+                # Check for rate limit keywords indicating we should try fallback
+                error_str = last_error.lower()
+                is_rate_limit = any(
+                    kw in error_str
+                    for kw in ["429", "quota", "rate limit", "ratelimit", "resource_exhausted", "too_many_requests"]
+                )
+                
+                if is_rate_limit and provider == providers_to_try[0] and len(providers_to_try) > 1:
+                    logger.warning(f"Rate limit detected for {provider}. Falling back to next available provider...")
+                    continue  # Try the next provider
+                
+                # If it's not a rate limit issue or we've exhausted options, break and use DB fallback
+                break
+
+        # Generate fallback report using local database
+        return self._generate_fallback_report(profile, f"Provider error: {last_error}")
 
     def _generate_fallback_report(self, profile: ApplicantProfile, error: str) -> str:
         """
