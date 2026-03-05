@@ -1,0 +1,29 @@
+# Core Framework
+crewai==0.102.0
+crewai-tools==0.17.0
+
+# LLM Providers
+langchain-openai==0.3.7
+langchain-google-genai==2.1.4
+
+# Data Validation
+pydantic==2.10.6
+
+# Web UI
+streamlit==1.42.0
+
+# Environment Management
+python-dotenv==1.0.1
+
+# YAML Configuration
+pyyaml==6.0.2
+
+# Logging
+rich==13.9.4
+
+# Testing
+pytest==8.3.4
+pytest-cov==6.0.0
+
+# Utilities
+tabulate==0.9.0

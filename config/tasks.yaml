@@ -1,0 +1,30 @@
+# ═══════════════════════════════════════════════════════════════
+# Bangladesh E-Passport Virtual Consular Officer
+# Task Configuration File
+# ═══════════════════════════════════════════════════════════════
+
+eligibility_assessment:
+  description: >
+    Analyze the applicant's eligibility based on Bangladesh E-Passport policies.
+    Determine permitted validity periods, required identification documents,
+    and flag any inconsistencies.
+  expected_output: >
+    Structured eligibility assessment with age category, permitted validity,
+    required ID, restrictions, flags, and eligibility status.
+
+fee_calculation:
+  description: >
+    Calculate the exact passport fee using the 2026 official fee structure.
+    Include base fee, 15% VAT, and total amount in BDT.
+  expected_output: >
+    Detailed fee breakdown with page count, delivery type, base fee,
+    VAT amount, total fee, and comparison if applicable.
+
+document_checklist:
+  description: >
+    Generate a customized document checklist and compile the final
+    Passport Readiness Report with all information from prior agents.
+  expected_output: >
+    Complete Passport Readiness Report in Markdown format with
+    applicant summary, eligibility, fees, document checklist,
+    warnings, and Bangla summary.
