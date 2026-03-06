@@ -233,4 +233,4 @@ amar-epassport-agent/
 
 ## 📄 License
 
-MIT License — Built by **Amar** for the Bangladesh E-Passport Portal Assistant project.
+MIT License — Built by Rashedul Albab.
